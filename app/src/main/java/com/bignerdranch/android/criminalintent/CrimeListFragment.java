@@ -26,6 +26,7 @@ public class CrimeListFragment extends Fragment{
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private int mPreviousAdapterSelected = -1;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
@@ -44,17 +45,22 @@ public class CrimeListFragment extends Fragment{
         updateUI();
     }
 
-    private void updateUI(){
+    private void updateUI() {
         CrimeLab crimelab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimelab.getCrimes();
 
 
-
-        if(mAdapter == null) {
+        if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
-        } else
-            mAdapter.notifyDataSetChanged();
+        } else {
+            if (mPreviousAdapterSelected < 0)
+                mAdapter.notifyDataSetChanged();
+            else {
+                mAdapter.notifyItemChanged(mPreviousAdapterSelected);
+                mPreviousAdapterSelected = -1;
+            }
+        }
     }
 
     private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder>{
@@ -115,6 +121,7 @@ public class CrimeListFragment extends Fragment{
         //Starting a new CrimeActivity by calling newIntent from CrimeActivity
         @Override
         public void onClick(View v) {
+            mPreviousAdapterSelected = getAdapterPosition();
             Intent intent = CrimeActivity.newIntent(getActivity(),mCrime.getId());
             startActivity(intent);
 
