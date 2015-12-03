@@ -94,14 +94,12 @@ public class CrimeFragment extends Fragment{
             }
         });
 
+
         //Get reference to mDateButton and set date of crime
         mDateButton = (Button) v.findViewById(R.id.fragment_crime_date);
         updateDate();
 
-        mDateButton.setText(mCrime.getDate().toString());
-        final String date = DateFormat.getLongDateFormat(getActivity()).format(mCrime.getDate());
-        mDateButton.setText(date);
-        //set clicklistener for date widget
+        //set on click listener for date widget
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,12 +116,12 @@ public class CrimeFragment extends Fragment{
         mTimeButton = (Button) v.findViewById(R.id.fragment_crime_time);
         updateTime();
 
-        mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
         mTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FragmentManager manager = getFragmentManager();
                 TimePickerFragment dialog = TimePickerFragment.newInstance(mCrime.getDate());
+                //accepts fragment that will be Target
                 dialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
                 //to get dialogFragment added to fragment manager
                 dialog.show(manager, DIALOG_TIME);
@@ -147,6 +145,13 @@ public class CrimeFragment extends Fragment{
         return v;
     }
 
+    /**
+     * Updates the appropriate button (date vs. time) if resultCode indicated something
+     * was changed and requestCode indicating which has changed.
+     * @param requestCode identifies whether to change Date or Time
+     * @param resultCode returns whether date was changed or not
+     * @param data intent that has date in the extras
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         if(resultCode != Activity.RESULT_OK)
