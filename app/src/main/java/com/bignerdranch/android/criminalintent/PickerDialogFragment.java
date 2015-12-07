@@ -7,7 +7,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -62,6 +64,23 @@ public abstract class PickerDialogFragment extends DialogFragment {
             }
         }).create();
     }
+
+    /**
+     * Upon this method being called we will have the ability to customize our own alertDialog as
+     * to having the standard on e created using the onCreateDialog() Method
+     * @return and createws the customized Alert Dialog
+     * REMARK: Commented out due to preferred implementation of standard Alert Dialog
+     */
+//    @Override
+//    public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+//        Date date = (Date) getArguments().getSerializable(ARG_DATE);
+//
+//        View v = initLayout(date);
+//
+//        return v;
+//    }
+
+
 
     /**
      * Puts date in intent with extras then sends results back to TargetFragement (this case CrimeFragment)
