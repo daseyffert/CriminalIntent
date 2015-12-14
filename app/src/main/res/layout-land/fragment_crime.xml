@@ -54,7 +54,7 @@
             android:id="@+id/fragment_crime_solved_crime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/crime_slolved_label"
+            android:text="@string/crime_solved_label"
             android:layout_weight="1"/>
     </LinearLayout>
 

@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,7 +16,7 @@ import java.util.UUID;
 /**
  * Created by Daniel on 11/26/2015.
  */
-public class CrimePagerActivity extends FragmentActivity {
+public class CrimePagerActivity extends AppCompatActivity {
     private static final String EXTRA_CRIME_ID = "com.bignerdranch.android.criminalintent.crime_id";
 
     private ViewPager mViewPager;
@@ -24,6 +25,12 @@ public class CrimePagerActivity extends FragmentActivity {
     public static Intent newIntent(Context packageContext, UUID crimeId){
         Intent intent = new Intent(packageContext, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
+        return intent;
+    }
+
+    @Override
+    public Intent getParentActivityIntent() {
+        Intent intent = new Intent(this,CrimeListActivity.class);
         return intent;
     }
 
@@ -61,7 +68,7 @@ public class CrimePagerActivity extends FragmentActivity {
             }
         });
 
-                //set ViewPager current item to index of selected crime
+        //set ViewPager current item to index of selected crime
         for(int i = 0; i < mCrimes.size(); i++)
             if(mCrimes.get(i).getId().equals(crimeId)) {
                 mViewPager.setCurrentItem(i);
