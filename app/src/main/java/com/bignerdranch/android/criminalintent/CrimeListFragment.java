@@ -58,8 +58,9 @@ public class CrimeListFragment extends Fragment{
         if(savedInstanceState != null)
             mSubtitleVisible = savedInstanceState.getBoolean(EXTRA_SUBTITLE_VISIBLE);
 
+        int check = CrimeLab.get(getActivity()).getCrimes().size();
         //set visibility of button and textview
-        if(CrimeLab.get(getActivity()).getCrimes().size() == 0) {
+        if(check == 0) {
 
             mAddButton.setVisibility(View.VISIBLE);
             mAddMessage.setVisibility(View.VISIBLE);
@@ -83,6 +84,7 @@ public class CrimeListFragment extends Fragment{
         } else {
             mAddButton.setVisibility(View.GONE);
             mAddMessage.setVisibility(View.GONE);
+            check--;
         }
 
         //update interface
@@ -173,6 +175,7 @@ public class CrimeListFragment extends Fragment{
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
+            mAdapter.setCrimes(crimes);
             if (mPreviousAdapterSelected < 0)
                 mAdapter.notifyDataSetChanged();
             else {
@@ -214,6 +217,10 @@ public class CrimeListFragment extends Fragment{
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        public void setCrimes(List<Crime> crimes) {
+            mCrimes = crimes;
         }
     }
 

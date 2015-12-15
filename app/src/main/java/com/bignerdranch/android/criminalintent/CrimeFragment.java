@@ -70,6 +70,13 @@ public class CrimeFragment extends Fragment{
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+    }
+
     //Explicitly inflate Fragment's View and get Reference to widgets
     //PURPOSE: In fragment Lifecycle, this method is called, when adding fragment to Fragment Manager,
     //to inflate fragment_crime, add textChange listener to textView
@@ -165,7 +172,7 @@ public class CrimeFragment extends Fragment{
         switch(item.getItemId()) {
             case R.id.fragment_crime_menu_item_delete_crime:
                 //delete the crime
-                CrimeLab.get(getActivity()).delCrime(mCrime);
+                CrimeLab.get(getActivity()).delCrime(mCrime.getId());
                 //return to parent activity
                 getActivity().finish();
                 return true;
