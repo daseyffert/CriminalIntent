@@ -13,6 +13,8 @@ public class Crime {
     private String mTitle;
     private Date mDate;
     private  boolean mSolved;
+    private String mSuspect;
+    private long mContact;
 
 
     //CONSTRUCTOR CLASS: generates a unique identifier
@@ -52,5 +54,21 @@ public class Crime {
 
     public void setSolved(boolean solved) {
         mSolved = solved;
+    }
+
+    public String getSuspect() {
+        return mSuspect;
+    }
+
+    public void setSuspect(String suspect) {
+        mSuspect = suspect;
+    }
+
+    public long getContact() {
+        return mContact;
+    }
+
+    public void setContact(long contact) {
+        mContact = contact;
     }
 }

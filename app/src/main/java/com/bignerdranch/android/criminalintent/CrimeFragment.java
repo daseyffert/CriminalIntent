@@ -2,9 +2,14 @@ package com.bignerdranch.android.criminalintent;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -20,7 +25,6 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import java.util.Date;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -38,12 +42,16 @@ public class CrimeFragment extends Fragment{
 
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
+    private static final int REQUEST_CONTACT = 2;
 
     private Crime mCrime;
     private TextView mTitleField;
     private Button mDateButton;
     private Button mTimeButton;
     private CheckBox mSolvedCheckBox;
+    private Button mReportButton;
+    private Button mSuspectButton;
+    private Button mCallSuspectButton;
 
 
     //ATTACHING ARGUMENTS: create fragment Instance and Bundle up arguments
@@ -155,6 +163,80 @@ public class CrimeFragment extends Fragment{
             }
         });
 
+        //Get reference to Button that sends report ans set up listener then implement implicit intent
+        mReportButton = (Button) v.findViewById(R.id.fragment_crime_crime_report);
+        mReportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //W/o using ShareCompatIntentBuilder
+                ////Send a string must be sent using ACTION_SEND as a plain/text
+                //Intent intent = new Intent(Intent.ACTION_SEND);
+                //intent.setType("text/plain");
+                ////Extras are put the same way but using arbitrary text
+                //intent.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+                //intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+                ////createChooser allows for you to choose the application from which to open intent
+                //intent = Intent.createChooser(intent, getString(R.string.send_report));
+                //startActivity(intent);
+                //*Chapter 15 Challenge 1 ShareCompat*
+                ShareCompat.IntentBuilder.from(getActivity())
+                        .setType("text/plain")
+                        .setText(getCrimeReport())
+                        .setSubject(getString(R.string.crime_report_subject))
+                        .setChooserTitle(getString(R.string.send_report))
+                        .startChooser();
+            }
+        });
+
+        //get a reference to suspect button and set up listener then implement implicit intent
+        final Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        mSuspectButton = (Button) v.findViewById(R.id.fragment_crime_crime_suspect);
+        mSuspectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
+        //once suspect is assigned show their name
+        if(mCrime.getSuspect() != null)
+            mSuspectButton.setText(mCrime.getSuspect());
+
+        //PackageManager knows all devices' components installed
+        //If application doesn't have contact app disable suspect button
+        PackageManager packageManager = getActivity().getPackageManager();
+        if(packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY) == null)
+            mSuspectButton.setEnabled(false);
+
+        //Get reference to CallSuspect button and set up listener
+        mCallSuspectButton = (Button) v.findViewById(R.id.fragment_crime_call_suspect);
+        mCallSuspectButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Uri contentUri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+
+                String selectClause = ContactsContract.CommonDataKinds.Phone._ID + " = ?";
+
+                String[] fields = {ContactsContract.CommonDataKinds.Phone.NUMBER};
+                String[] selectParams = {Long.toString(mCrime.getContact())};
+
+                Cursor cursor = getActivity().getContentResolver().query(contentUri, fields, selectClause, selectParams, null);
+
+                if(cursor != null && cursor.getCount() > 0) {
+                    try {
+                        cursor.moveToFirst();
+                        String number = cursor.getString(0);
+                        Uri phoneNumber = Uri.parse("tel:" + number);
+                        Intent intent = new Intent(Intent.ACTION_DIAL, phoneNumber);
+                        startActivity(intent);
+                    } finally {
+                        cursor.close();
+                    }
+                }
+            }
+        });
+
         return v;
     }
 
@@ -192,18 +274,47 @@ public class CrimeFragment extends Fragment{
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         if(resultCode != Activity.RESULT_OK)
             return;
+        //To check for the set Time and date
+        if(requestCode == REQUEST_DATE || requestCode == REQUEST_TIME){
+            Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
+            mCrime.setDate(date);
 
-        Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
-        mCrime.setDate(date);
+            switch (requestCode) {
+                case REQUEST_DATE:
+                    updateDate();
+                    break;
+                case REQUEST_TIME:
+                    updateTime();
+                    break;
+            }
+        } else if(requestCode == REQUEST_CONTACT && data != null) {
+            Uri contactUri = data.getData();
+            //Specify which fields you want to query to return values for
+            String[] queryFields = {ContactsContract.Contacts.DISPLAY_NAME, ContactsContract.Contacts._ID};
+            //Perform your query - the contactUri is like a "where" clause here
+            Cursor cursor = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
 
-        switch(requestCode) {
-            case REQUEST_DATE:
-                updateDate();
-                break;
-            case REQUEST_TIME:
-                updateTime();
-                break;
+            try {
+                //Double check you actually got results
+                if(cursor.getCount() == 0)
+                    return;
+
+                //Pull out the first column of the frist row of data = that is your suspects' name
+                cursor.moveToFirst();
+                String suspect = cursor.getString(0);
+                long contact = cursor.getLong(1);
+
+                mCrime.setSuspect(suspect);
+                mCrime.setContact(contact);
+
+                mSuspectButton.setText(suspect);
+                //enables button and changes text
+                //updateCallSuspectButton();
+            } finally {
+                cursor.close();
+            }
         }
+
 
     }
 
@@ -213,5 +324,36 @@ public class CrimeFragment extends Fragment{
 
     private void updateTime() {
         mTimeButton.setText(DateFormat.format("h:mm a", mCrime.getDate()));
+    }
+
+    /**
+     * Creates four strings and pieces them together making the Crime Report
+     * @return the Crime Report
+     */
+    private String getCrimeReport() {
+        String solvedString = null;
+
+        //String 1 Check whether crime has been solved to add string needed
+        if(mCrime.isSolved())
+            solvedString = getString(R.string.crime_report_solved);
+        else
+            solvedString = getString(R.string.crime_report_unsolved);
+
+        //String 2 format the way the date is displayed
+        String dateFormat = "EEE, MMM dd";
+        String dateString = DateFormat.format(dateFormat, mCrime.getDate()).toString();
+
+        //String 3 check if there is a suspect to set correct string resource
+        String suspect = mCrime.getSuspect();
+        if(suspect == null)
+            suspect = getString(R.string.crime_report_no_suspect);
+        else
+            suspect = getString(R.string.crime_report_suspect);
+
+        //join all the strings into sorrect assigned value
+        String report = getString(R.string.crime_report, mCrime.getTitle(), dateString, solvedString, suspect);
+
+
+        return report;
     }
 }
